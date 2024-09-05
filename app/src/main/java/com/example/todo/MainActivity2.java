@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import androidx.activity.EdgeToEdge;
@@ -22,9 +23,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MainActivity2 extends AppCompatActivity {
-    ListView listView;
+    ListView listView, listView1;
     SharedPreferences erpo;
     ArrayList<String> todolist;
+    ArrayList<String> completed;
+    ArrayAdapter<String> completedAdapter;
 
     private void saveColorPreference(int position, String color) {
         SharedPreferences.Editor editor = erpo.edit();
@@ -48,28 +51,41 @@ public class MainActivity2 extends AppCompatActivity {
         Set<String> set = erpo.getStringSet("todo", new HashSet<>());
         todolist = new ArrayList<>(set);
         Collections.sort(todolist);
+        completed = new ArrayList<>(erpo.getStringSet("completed", new HashSet<>()));
+
         listView = findViewById(R.id.listview);
+        listView1 = findViewById(R.id.listview1);
+
+        completedAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, completed);
+        listView1.setAdapter(completedAdapter);
+
         TodoAdapter adapter = new TodoAdapter(this, todolist, erpo);
         listView.setAdapter(adapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity2.this);
-                alert.setTitle("TODO");
-                alert.setMessage("Choose the option");
-                alert.setPositiveButton("Done", (dialogInterface, which) -> {
-                    view.setBackgroundColor(Color.GREEN);
-                    saveColorPreference(i, "GREEN");
-                    adapter.notifyDataSetChanged();  // Refresh the list
-                });
-                alert.setNegativeButton("Pending", (dialogInterface, which) -> {
-                    view.setBackgroundColor(Color.RED);
-                    saveColorPreference(i, "RED");
-                    adapter.notifyDataSetChanged();  // Refresh the list
-                });
-                alert.show();
-            }
+        listView.setOnItemClickListener((adapterView, view, i, l) -> {
+            AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity2.this);
+            alert.setTitle("TODO");
+            alert.setMessage("Choose the option");
+            alert.setPositiveButton("Done", (dialogInterface, which) -> {
+                String item = todolist.get(i); // Get the item from the list
+                view.setBackgroundColor(Color.GREEN);
+                saveColorPreference(i, "GREEN");
+                if (!completed.contains(item)) {
+                    completed.add(item);
+                    Set<String> setCompleted = new HashSet<>(completed);
+                    SharedPreferences.Editor editor = erpo.edit();
+                    editor.putStringSet("completed", setCompleted);
+                    editor.apply();
+                    completedAdapter.notifyDataSetChanged();
+                }
+                adapter.notifyDataSetChanged(); // Refresh the todo list
+            });
+            alert.setNegativeButton("Pending", (dialogInterface, which) -> {
+                view.setBackgroundColor(Color.RED);
+                saveColorPreference(i, "RED");
+                adapter.notifyDataSetChanged(); // Refresh the todo list
+            });
+            alert.show();
         });
     }
 }
