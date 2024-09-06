@@ -61,9 +61,11 @@ public class MainActivity3 extends AppCompatActivity {
                 editor.putStringSet("todo",set);
                 editor.apply();
                 Toast.makeText(MainActivity3.this, "Todo list created", Toast.LENGTH_SHORT).show();
+
                 Intent intent =new Intent(MainActivity3.this, MainActivity2.class);
 //                intent.putExtra("todo",todo);
                 startActivity(intent);
+                onBackPressed();
             }
 
         });
